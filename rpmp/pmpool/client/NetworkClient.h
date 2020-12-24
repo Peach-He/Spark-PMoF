@@ -47,7 +47,7 @@ class ChunkMgr;
 
 typedef promise<RequestReplyContext> Promise;
 typedef future<RequestReplyContext> Future;
-
+//通过networkclient发送request，获取返回消息
 class RequestHandler : public ThreadWrapper {
  public:
   explicit RequestHandler(std::shared_ptr<NetworkClient> networkClient);
@@ -90,14 +90,14 @@ class RequestHandler : public ThreadWrapper {
   void inflight_erase(std::shared_ptr<Request> request);
   void handleRequest(std::shared_ptr<Request> request);
 };
-
+//client关闭的时候调用回调函数
 class ClientShutdownCallback : public Callback {
  public:
   ClientShutdownCallback() {}
   ~ClientShutdownCallback() = default;
   void operator()(void *param_1, void *param_2) {}
 };
-
+//client连接的时候调用回调函数
 class ClientConnectedCallback : public Callback {
  public:
   explicit ClientConnectedCallback(
@@ -108,7 +108,7 @@ class ClientConnectedCallback : public Callback {
  private:
   std::shared_ptr<NetworkClient> networkClient_;
 };
-
+//client接收到消息的时候调用回调函数
 class ClientRecvCallback : public Callback {
  public:
   ClientRecvCallback(std::shared_ptr<ChunkMgr> chunkMgr,
@@ -125,7 +125,7 @@ class ClientRecvCallback : public Callback {
   uint64_t end = 0;
   std::mutex mtx;
 };
-
+//client发送消息的时候调用回调函数
 class ClientSendCallback : public Callback {
  public:
   explicit ClientSendCallback(std::shared_ptr<ChunkMgr> chunkMgr)

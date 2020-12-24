@@ -73,8 +73,9 @@ class PmemObjAllocator : public Allocator {
                             std::shared_ptr<NetworkServer> server, int wid)
       : log_(log), diskInfo_(diskInfos), server_(server), wid_(wid) {}
   ~PmemObjAllocator() { close(); }
-
+//初始化pmem pool，创建pmem pool并open
   int init() override {
+    //将str设置为0
     memset(str, '0', 1048576);
     if (create()) {
       int res = open();
@@ -86,7 +87,7 @@ class PmemObjAllocator : public Allocator {
     }
     return 0;
   }
-
+//通过pmemobj分配内存并写入数据，如果content为nullptr，则只分配内存
   uint64_t allocate_and_write(uint64_t size,
                               const char *content = nullptr) override {
     jmp_buf env;
@@ -159,7 +160,7 @@ class PmemObjAllocator : public Allocator {
 
     return bep->hdr.addr;
   }
-
+//通过pmemobj写pmem
   int write(uint64_t address, const char *content, uint64_t size) override {
     std::unique_lock<std::mutex> l(mtx);
     if (!index_map.count(address)) {
@@ -293,6 +294,7 @@ class PmemObjAllocator : public Allocator {
   Chunk *get_rma_chunk() { return base_ck; }
 
  private:
+ //创建pmem pool，并将pmem pool注册为RDMA region
   int create() {
     // debug setting
     int sds_write_value = 0;

@@ -46,7 +46,7 @@ struct MessageHeader {
   uint64_t sequence_id_;
   int msg_size;
 };
-
+//处理RDMA消息
 class RecvCallback : public Callback {
  public:
   RecvCallback() = delete;
@@ -73,7 +73,7 @@ class SendCallback : public Callback {
   std::shared_ptr<ChunkMgr> chunkMgr_;
   std::unordered_map<uint64_t, std::shared_ptr<RequestReply>> rrcMap_;
 };
-
+//RDMA读写完成后进行的操作
 class ReadCallback : public Callback {
  public:
   ReadCallback() = delete;

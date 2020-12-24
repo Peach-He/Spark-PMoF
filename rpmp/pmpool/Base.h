@@ -43,6 +43,9 @@ struct RequestReplyMsg {
   uint64_t key;
 };
 
+/*
+封装address、size、r_key
+*/
 struct block_meta {
   block_meta() : block_meta(0, 0, 0) {}
   block_meta(uint64_t _address, uint64_t _size)

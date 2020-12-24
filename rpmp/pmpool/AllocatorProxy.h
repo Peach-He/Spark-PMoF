@@ -45,6 +45,7 @@ class AllocatorProxy {
     vector<uint64_t> sizes = config_->get_pool_sizes();
     assert(paths.size() == sizes.size());
     for (int i = 0; i < paths.size(); i++) {
+      //每个path对应一个pmem allocator
       auto diskInfo = std::make_shared<DiskInfo>(paths[i], sizes[i]);
       diskInfos_.push_back(diskInfo);
       allocators_.push_back(
@@ -63,7 +64,8 @@ class AllocatorProxy {
     }
     return 0;
   }
-
+//通过pmemobj分配内存并写入数据，如果content为nullptr，则只分配内存
+//index控制写入哪个pmem dir
   uint64_t allocate_and_write(uint64_t size, const char *content = nullptr,
                               int index = -1) {
     uint64_t addr = 0;
@@ -76,7 +78,7 @@ class AllocatorProxy {
     }
     return addr;
   }
-
+//通过pmemobj将数据写入pmem，address是经过处理的，不是pmem的address
   int write(uint64_t address, const char *content, uint64_t size) {
     uint32_t wid = GET_WID(address);
     return allocators_[wid]->write(address, content, size);

@@ -29,7 +29,7 @@ Request::~Request() {
 }
 
 RequestContext &Request::get_rc() { return requestContext_; }
-
+//通过requestcontext设置request message
 void Request::encode() {
   const std::lock_guard<std::mutex> lock(data_lock_);
   OpType rt = requestContext_.type;

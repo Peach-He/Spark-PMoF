@@ -52,7 +52,7 @@ void RequestHandler::addTask(std::shared_ptr<Request> request,
   callback_map[request->get_rc().rid] = func;
   pendingRequestQueue_.enqueue(request);
 }
-
+//从pendingRequestQueue中获取等待处理的request并处理
 int RequestHandler::entry() {
   std::shared_ptr<Request> request;
   bool res = pendingRequestQueue_.wait_dequeue_timed(
@@ -62,7 +62,7 @@ int RequestHandler::entry() {
   }
   return 0;
 }
-
+//存在就获取，不存在就插入
 std::shared_ptr<RequestHandler::InflightRequestContext>
 RequestHandler::inflight_insert_or_get(std::shared_ptr<Request> request) {
   const std::lock_guard<std::mutex> lock(inflight_mtx_);
@@ -81,7 +81,7 @@ void RequestHandler::inflight_erase(std::shared_ptr<Request> request) {
   const std::lock_guard<std::mutex> lock(inflight_mtx_);
   inflight_.erase(request->requestContext_.rid);
 }
-
+//等待request处理的返回消息，返回请求是否成功
 uint64_t RequestHandler::wait(std::shared_ptr<Request> request) {
   auto ctx = inflight_insert_or_get(request);
   unique_lock<mutex> lk(ctx->mtx_reply);
@@ -106,7 +106,7 @@ uint64_t RequestHandler::wait(std::shared_ptr<Request> request) {
   inflight_erase(request);
   return res;
 }
-
+//等待request处理的返回消息，返回RequestReplyContext
 RequestReplyContext &RequestHandler::get(std::shared_ptr<Request> request) {
   auto ctx = inflight_insert_or_get(request);
   unique_lock<mutex> lk(ctx->mtx_reply);
@@ -149,7 +149,7 @@ void RequestHandler::notify(std::shared_ptr<RequestReply> requestReply) {
     ctx->cv_reply.notify_one();
   }
 }
-
+//通过RDMA message发送请求信息，对于读写数据，是通过server端的RDMA read/write实现的，所以需要传输读写地址信息
 void RequestHandler::handleRequest(std::shared_ptr<Request> request) {
   auto ctx = inflight_insert_or_get(request);
   OpType rt = request->get_rc().type;
@@ -318,7 +318,7 @@ Chunk *NetworkClient::register_rma_buffer(char *rma_buffer, uint64_t size) {
 void NetworkClient::unregister_rma_buffer(int buffer_id) {
   client_->unreg_rma_buffer(buffer_id);
 }
-
+//从circularbuffer获取buffer，写入数据，返回buffer地址；如果data为nullptr，不写数据
 uint64_t NetworkClient::get_dram_buffer(const char *data, uint64_t size) {
   char *dest = circularBuffer_->get(size);
   if (data) {
@@ -326,7 +326,7 @@ uint64_t NetworkClient::get_dram_buffer(const char *data, uint64_t size) {
   }
   return (uint64_t)dest;
 }
-
+//数据已经被写入RPMP，用于标识之前使用的circularbuffer空间为available
 void NetworkClient::reclaim_dram_buffer(uint64_t src_address, uint64_t size) {
   circularBuffer_->put(reinterpret_cast<char *>(src_address), size);
 }

@@ -28,7 +28,7 @@
 #include "pmpool/Common.h"
 #include "pmpool/NetworkServer.h"
 #include "pmpool/RmaBufferRegister.h"
-
+//数据对齐??
 #define p2align(x, a) (((x) + (a)-1) & ~((a)-1))
 
 class CircularBuffer {
@@ -49,6 +49,7 @@ class CircularBuffer {
     std::lock_guard<std::mutex> lk(lock_);
     if (!initialized) init();
   }
+  //初始化buffer并注册rma buffer
   void init() {
     uint64_t total = buffer_num_ * buffer_size_;
     buffer_ = static_cast<char *>(mmap(0, buffer_num_ * buffer_size_,
@@ -88,7 +89,7 @@ class CircularBuffer {
     std::cout << "CircularBuffer destructed" << std::endl;
 #endif
   }
-
+//从circularbuffer中获取bytes字节空间，返回起始地址
   char *get(uint64_t bytes) {
     try_init();
     uint64_t offset = 0;
@@ -98,7 +99,7 @@ class CircularBuffer {
     }
     return buffer_ + offset * buffer_size_;
   }
-
+//设置circularbuffer从data开始的bytes字节为available，可以进行数据覆盖
   void put(const char *data, uint64_t bytes) {
     try_init();
     assert((data - buffer_) % buffer_size_ == 0);
@@ -115,7 +116,7 @@ class CircularBuffer {
     std::cout << std::endl;
     std::cout << "********************************************" << std::endl;
   }
-
+//从circularbuffer中获取bytes字节的空间，修改offset为circularbuffer中的index
   bool get(uint64_t bytes, uint64_t *offset) {
     uint32_t alloc_num = p2align(bytes, buffer_size_) / buffer_size_;
     if (alloc_num > buffer_num_) {
@@ -174,7 +175,7 @@ class CircularBuffer {
   bool initialized = false;
   std::mutex lock_;
   uint64_t optimal_start = 0;
-
+//bit标志位为1表示circularbuffer相应位置已经被占用，相应位置有数据
   bool check_availability(uint64_t index, uint64_t alloc_num) {
     for (int i = 0; i < alloc_num; i++) {
       if ((index + i) >= buffer_num_) {

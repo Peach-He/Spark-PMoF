@@ -14,7 +14,7 @@
 #include "pmpool/Event.h"
 #include "pmpool/Log.h"
 #include "pmpool/buffer/CircularBuffer.h"
-
+//based on HPNL
 NetworkServer::NetworkServer(std::shared_ptr<Config> config,
                              std::shared_ptr<Log> log)
     : config_(config), log_(log) {
@@ -28,10 +28,11 @@ NetworkServer::~NetworkServer() {
 }
 
 int NetworkServer::init() {
+  //HPNL server
   server_ = std::make_shared<Server>(config_->get_network_worker_num(),
                                      config_->get_network_buffer_num());
   CHK_ERR("hpnl server init", server_->init());
-
+  //HPNL
   chunkMgr_ = std::make_shared<ChunkPool>(server_.get(),
                                           config_->get_network_buffer_size(),
                                           config_->get_network_buffer_num());
@@ -41,6 +42,7 @@ int NetworkServer::init() {
 }
 
 int NetworkServer::start() {
+  //启动HPNL server并监听端口，初始化server端的circularbuffer
   server_->start();
   CHK_ERR("hpnl server listen", server_->listen(config_->get_ip().c_str(),
                                                 config_->get_port().c_str()));
@@ -59,7 +61,7 @@ Chunk *NetworkServer::register_rma_buffer(char *rma_buffer, uint64_t size) {
 void NetworkServer::unregister_rma_buffer(int buffer_id) {
   server_->unreg_rma_buffer(buffer_id);
 }
-
+//从circularbuffer获取buffer，设置chunk
 void NetworkServer::get_dram_buffer(RequestReplyContext *rrc) {
   char *buffer = circularBuffer_->get(rrc->size);
 #ifdef DEBUG
@@ -82,7 +84,7 @@ void NetworkServer::get_dram_buffer(RequestReplyContext *rrc) {
   ck->size = rrc->size;
   rrc->ck = ck;
 }
-
+//将内存空间返还给circularbuffer，删除chunk
 void NetworkServer::reclaim_dram_buffer(RequestReplyContext *rrc) {
   char *buffer_tmp = reinterpret_cast<char *>(rrc->dest_address);
   circularBuffer_->put(buffer_tmp, rrc->size);

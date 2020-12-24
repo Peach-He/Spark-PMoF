@@ -42,7 +42,7 @@ void PmPoolClient::begin_tx() {
   while (!tx_finished) {
     tx_con.wait(lk);
   }
-  tx_finished;
+  tx_finished; //no need to set to false??
 }
 
 uint64_t PmPoolClient::alloc(uint64_t size) {
@@ -68,7 +68,7 @@ int PmPoolClient::free(uint64_t address) {
 void PmPoolClient::shutdown() { networkClient_->shutdown(); }
 
 void PmPoolClient::wait() { networkClient_->wait(); }
-
+//address为RPMP的地址
 int PmPoolClient::write(uint64_t address, const char *data, uint64_t size) {
   RequestContext rc = {};
   rc.type = WRITE;
@@ -76,6 +76,7 @@ int PmPoolClient::write(uint64_t address, const char *data, uint64_t size) {
   rc.size = size;
   rc.address = address;
   // allocate memory for RMA read from client.
+  //将数据写入circularbuffer，返回数据在circularbuffer中的address
   rc.src_address = networkClient_->get_dram_buffer(data, rc.size);
   rc.src_rkey = networkClient_->get_rkey();
   auto request = std::make_shared<Request>(rc);

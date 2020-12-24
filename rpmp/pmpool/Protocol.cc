@@ -171,7 +171,7 @@ Protocol::~Protocol() {
   finalizeWorker_->stop();
   finalizeWorker_->join();
 }
-
+//设置各种callback，创建并启动recv worker、finalize worker、read worker
 int Protocol::init() {
   recvCallback_ = std::make_shared<RecvCallback>(
       shared_from_this(), networkServer_->get_chunk_mgr());
@@ -179,7 +179,7 @@ int Protocol::init() {
       std::make_shared<SendCallback>(networkServer_->get_chunk_mgr(), rrcMap_);
   readCallback_ = std::make_shared<ReadCallback>(shared_from_this());
   writeCallback_ = std::make_shared<WriteCallback>(shared_from_this());
-
+//每个pool有一个recv worker
   for (int i = 0; i < config_->get_pool_size(); i++) {
     auto recvWorker = std::make_shared<RecvWorker>(
         shared_from_this(), config_->get_affinities_()[i] - 1);
@@ -203,7 +203,7 @@ int Protocol::init() {
   networkServer_->set_write_callback(writeCallback_.get());
   return 0;
 }
-
+//接收消息后，通过回调函数将请求添加到worker
 void Protocol::enqueue_recv_msg(std::shared_ptr<Request> request) {
   RequestContext rc = request->get_rc();
   if (rc.address != 0) {
@@ -213,7 +213,7 @@ void Protocol::enqueue_recv_msg(std::shared_ptr<Request> request) {
     recvWorkers_[rc.rid % config_->get_pool_size()]->addTask(request);
   }
 }
-
+//处理client的请求，所有操作都是server作为主动方
 void Protocol::handle_recv_msg(std::shared_ptr<Request> request) {
   num_requests_++;
   if (num_requests_ % 10000 == 0) {
@@ -399,7 +399,7 @@ void Protocol::enqueue_finalize_msg(
     std::shared_ptr<RequestReply> requestReply) {
   finalizeWorker_->addTask(requestReply);
 }
-
+//对于一些需要回复client操作结果的操作，需要进行finalize，将操作结果通过RDMA message发送给client
 void Protocol::handle_finalize_msg(std::shared_ptr<RequestReply> requestReply) {
   auto rrc = requestReply->get_rrc();
   if (rrc.type == PUT_REPLY) {
@@ -438,7 +438,7 @@ void Protocol::enqueue_rma_msg(uint64_t buffer_id) {
     readWorkers_[rrc.rid % config_->get_pool_size()]->addTask(requestReply);
   }
 }
-
+//处理RDMA读写消息
 void Protocol::handle_rma_msg(std::shared_ptr<RequestReply> requestReply) {
   auto rrc = requestReply->get_rrc();
   switch (rrc.type) {

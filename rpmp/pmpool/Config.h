@@ -35,6 +35,7 @@ class Config {
   int init(int argc, char **argv) {
     try {
       options_description desc{"Options"};
+      //设置默认配置，自定义配置可以通过命令行传入
       desc.add_options()("help,h", "Help screen")(
           "address,a", value<string>()->default_value("172.168.0.40"),
           "set the rdma server address")(
